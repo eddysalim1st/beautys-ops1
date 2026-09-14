@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Papan Operasional — Beauty's Hotpot & Mahjong Lounge</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap');
+
+:root{
+  --bg:#14181a;
+  --panel:#1d2422;
+  --panel-2:#252e2b;
+  --ink:#ede6d6;
+  --ink-dim:#98a29c;
+  --line:rgba(237,230,214,0.10);
+  --red:#c1432b;
+  --red-soft:rgba(193,67,43,0.16);
+  --jade:#4e8a73;
+  --jade-soft:rgba(78,138,115,0.16);
+  --gold:#c9a24b;
+  --gold-soft:rgba(201,162,75,0.16);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:'Inter',system-ui,sans-serif;
+  min-height:100vh;
+  -webkit-tap-highlight-color:transparent;
+}
+.app{max-width:720px;margin:0 auto;padding:18px 14px 100px;}
+
+header.top{padding:6px 4px 18px;border-bottom:1px solid var(--line);margin-bottom:16px;}
+header.top h1{
+  font-family:'Fraunces',serif;
+  font-weight:600;
+  font-size:26px;
+  line-height:1.15;
+  margin:0 0 4px;
+  letter-spacing:-0.01em;
+}
+header.top p{margin:0;color:var(--ink-dim);font-size:13.5px;}
+
+.pills{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 14px;scrollbar-width:none;}
+.pills::-webkit-scrollbar{display:none;}
+.pill{
+  flex:0 0 auto;
+  padding:7px 14px;
+  border-radius:100px;
+  border:1px solid var(--line);
+  background:var(--panel);
+  color:var(--ink-dim);
+  font-size:13px;
+  font-weight:500;
+  cursor:pointer;
+  white-space:nowrap;
+  transition:background .15s, color .15s, border-color .15s;
+}
+.pill.active{background:var(--gold-soft);border-color:var(--gold);color:var(--gold);}
+
+.tabs{display:flex;gap:6px;background:var(--panel);border-radius:12px;padding:4px;margin-bottom:16px;border:1px solid var(--line);}
+.tab{
+  flex:1;text-align:center;padding:10px 4px;border-radius:9px;
+  font-size:12.5px;font-weight:600;color:var(--ink-dim);cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  transition:background .15s,color .15s;
+}
+.tab .count{font-family:'Fraunces',serif;font-size:19px;font-weight:600;line-height:1;}
+.tab[data-status="progress"].active{background:var(--gold-soft);color:var(--gold);}
+.tab[data-status="handoff"].active{background:var(--red-soft);color:var(--red);}
+.tab[data-status="done"].active{background:var(--jade-soft);color:var(--jade);}
+
+.list{display:flex;flex-direction:column;gap:10px;}
+.empty{
+  text-align:center;color:var(--ink-dim);padding:50px 20px;
+  font-size:14px;border:1px dashed var(--line);border-radius:14px;
+}
+.empty b{display:block;color:var(--ink);font-family:'Fraunces',serif;font-size:17px;font-weight:600;margin-bottom:6px;}
+
+.card{
+  background:var(--panel);border:1px solid var(--line);border-radius:14px;
+  padding:14px 15px;border-left:3px solid var(--gold);
+}
+.card.status-handoff{border-left-color:var(--red);}
+.card.status-done{border-left-color:var(--jade);}
+.card h3{font-family:'Fraunces',serif;font-weight:600;font-size:16.5px;margin:0 0 5px;line-height:1.3;}
+.card p.desc{margin:0 0 10px;font-size:13.5px;color:var(--ink-dim);line-height:1.5;}
+.meta-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:11px;}
+.tag{
+  font-size:11.5px;padding:4px 9px;border-radius:100px;background:var(--panel-2);
+  color:var(--ink-dim);font-weight:500;
+}
+.tag.route{background:var(--red-soft);color:var(--red);font-weight:600;}
+.card .foot{display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.card .pic{font-size:12px;color:var(--ink-dim);}
+.card .pic b{color:var(--ink);font-weight:600;}
+.actions{display:flex;gap:6px;}
+.btn{
+  border:none;border-radius:8px;padding:7px 11px;font-size:12px;font-weight:600;
+  cursor:pointer;font-family:inherit;
+}
+.btn-advance{background:var(--jade-soft);color:var(--jade);}
+.btn-edit{background:var(--panel-2);color:var(--ink-dim);}
+.btn-del{background:var(--panel-2);color:var(--ink-dim);}
+.btn-del.confirm{background:var(--red-soft);color:var(--red);}
+
+.fab{
+  position:fixed;right:18px;bottom:22px;width:56px;height:56px;border-radius:50%;
+  background:var(--gold);color:#1a1a14;border:none;font-size:26px;font-weight:600;
+  box-shadow:0 8px 24px rgba(0,0,0,0.4);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  z-index:20;
+}
+
+.overlay{
+  position:fixed;inset:0;background:rgba(10,12,11,0.6);backdrop-filter:blur(2px);
+  display:none;align-items:flex-end;justify-content:center;z-index:30;
+}
+.overlay.open{display:flex;}
+.sheet{
+  background:var(--panel);width:100%;max-width:720px;border-radius:18px 18px 0 0;
+  padding:20px 18px calc(20px + env(safe-area-inset-bottom));max-height:88vh;overflow-y:auto;
+  border-top:1px solid var(--line);
+}
+.sheet h2{font-family:'Fraunces',serif;font-size:19px;font-weight:600;margin:0 0 16px;}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:12px;color:var(--ink-dim);margin-bottom:6px;font-weight:600;}
+.field input, .field textarea, .field select{
+  width:100%;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;
+  padding:11px 12px;color:var(--ink);font-family:inherit;font-size:14.5px;
+}
+.field textarea{resize:vertical;min-height:64px;}
+.field select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--ink-dim) 50%),linear-gradient(135deg,var(--ink-dim) 50%,transparent 50%);background-position:calc(100% - 18px) calc(1.1em),calc(100% - 13px) calc(1.1em);background-size:5px 5px,5px 5px;background-repeat:no-repeat;}
+.status-choice{display:flex;gap:8px;}
+.status-choice button{
+  flex:1;padding:10px 4px;border-radius:10px;border:1px solid var(--line);background:var(--panel-2);
+  color:var(--ink-dim);font-size:12.5px;font-weight:600;cursor:pointer;
+}
+.status-choice button.sel[data-s="progress"]{background:var(--gold-soft);border-color:var(--gold);color:var(--gold);}
+.status-choice button.sel[data-s="handoff"]{background:var(--red-soft);border-color:var(--red);color:var(--red);}
+.status-choice button.sel[data-s="done"]{background:var(--jade-soft);border-color:var(--jade);color:var(--jade);}
+.sheet-actions{display:flex;gap:10px;margin-top:6px;}
+.sheet-actions button{flex:1;padding:13px;border-radius:11px;border:none;font-weight:700;font-size:14.5px;font-family:inherit;cursor:pointer;}
+.btn-cancel{background:var(--panel-2);color:var(--ink-dim);}
+.btn-save{background:var(--gold);color:#1a1a14;}
+#targetWrap{display:none;}
+.loading{text-align:center;padding:60px 10px;color:var(--ink-dim);font-size:13.5px;}
+.banner{
+  display:none;align-items:center;justify-content:space-between;gap:10px;
+  background:var(--red-soft);border:1px solid var(--red);color:var(--red);
+  border-radius:12px;padding:11px 13px;margin-bottom:14px;font-size:13px;font-weight:600;
+}
+.banner.show{display:flex;}
+.banner button{
+  flex:0 0 auto;background:var(--red);color:#1a1414;border:none;border-radius:8px;
+  padding:6px 11px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;
+}
+.toast{
+  position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);
+  background:var(--jade);color:#0f1a15;padding:9px 16px;border-radius:100px;
+  font-size:12.5px;font-weight:700;opacity:0;transition:opacity .2s, transform .2s;
+  z-index:40;pointer-events:none;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <h1>Papan Operasional</h1>
+    <p>Beauty's Hotpot & Mahjong Lounge — status kerja antar bagian, real-time buat seluruh tim.</p>
+  </header>
+
+  <div class="banner" id="saveBanner">
+    <span id="saveBannerText">Gagal simpan.</span>
+    <button id="btnRetry">Coba lagi</button>
+  </div>
+  <div class="pills" id="deptPills"></div>
+  <div class="tabs" id="statusTabs"></div>
+  <div class="list" id="taskList"><div class="loading">Memuat data tim…</div></div>
+</div>
+
+<button class="fab" id="fabAdd" title="Tambah tugas">+</button>
+<div class="toast" id="toast">Tersimpan</div>
+
+<div class="overlay" id="overlay">
+  <div class="sheet">
+    <h2 id="sheetTitle">Tugas Baru</h2>
+    <div class="field">
+      <label>Judul tugas</label>
+      <input type="text" id="fTitle" placeholder="Contoh: Restock kecap manis dapur">
+    </div>
+    <div class="field">
+      <label>Detail / catatan</label>
+      <textarea id="fDesc" placeholder="Jelasin singkat progressnya atau apa yang perlu dikerjakan"></textarea>
+    </div>
+    <div class="field">
+      <label>Bagian yang pegang tugas ini</label>
+      <select id="fDept"></select>
+    </div>
+    <div class="field">
+      <label>Nama PIC</label>
+      <input type="text" id="fPic" placeholder="Nama yang megang">
+    </div>
+    <div class="field">
+      <label>Status</label>
+      <div class="status-choice" id="statusChoice">
+        <button data-s="progress">Berjalan</button>
+        <button data-s="handoff">Lanjut ke bagian lain</button>
+        <button data-s="done">Selesai</button>
+      </div>
+    </div>
+    <div class="field" id="targetWrap">
+      <label>Diteruskan ke bagian</label>
+      <select id="fTarget"></select>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn-cancel" id="btnCancel">Batal</button>
+      <button class="btn-save" id="btnSave">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const DEPTS = ["Kepala Operational","Marketing","Captain Floor","Administrasi & Akuntansi","Kasir/Keuangan","Kepala Dapur","Quality Control Food & Drink","HRD"];
+const STATUS_LABEL = {progress:"Sedang Berjalan", handoff:"Perlu Dilanjutkan", done:"Selesai"};
+const FIREBASE_BASE = "https://beautys-ops-default-rtdb.asia-southeast1.firebasedatabase.app";
+const DATA_URL = FIREBASE_BASE + "/tasks.json";
+
+let tasks = [];
+let deptFilter = "Semua";
+let statusTab = "progress";
+let editingId = null;
+let pendingStatus = "progress";
+let deleteArmed = null;
+
+const $ = (s)=>document.querySelector(s);
+const deptPillsEl = $("#deptPills");
+const statusTabsEl = $("#statusTabs");
+const listEl = $("#taskList");
+
+function buildDeptPills(){
+  const all = ["Semua", ...DEPTS];
+  deptPillsEl.innerHTML = all.map(d =>
+    `<button class="pill${d===deptFilter?' active':''}" data-d="${d}">${d}</button>`
+  ).join("");
+  deptPillsEl.querySelectorAll(".pill").forEach(p=>{
+    p.addEventListener("click", ()=>{ deptFilter = p.dataset.d; render(); });
+  });
+}
+
+function buildStatusTabs(){
+  statusTabsEl.innerHTML = Object.keys(STATUS_LABEL).map(s=>{
+    const n = tasks.filter(t=> t.status===s && (deptFilter==="Semua" || t.dept===deptFilter || t.targetDept===deptFilter)).length;
+    return `<div class="tab${s===statusTab?' active':''}" data-status="${s}">
+      <span class="count">${n}</span>
+      <span>${STATUS_LABEL[s]}</span>
+    </div>`;
+  }).join("");
+  statusTabsEl.querySelectorAll(".tab").forEach(t=>{
+    t.addEventListener("click", ()=>{ statusTab = t.dataset.status; render(); });
+  });
+}
+
+function renderList(){
+  const filtered = tasks.filter(t=>
+    t.status===statusTab && (deptFilter==="Semua" || t.dept===deptFilter || t.targetDept===deptFilter)
+  ).sort((a,b)=> b.updatedAt - a.updatedAt);
+
+  if(filtered.length===0){
+    const msgs = {
+      progress:"Belum ada tugas yang sedang berjalan.",
+      handoff:"Belum ada tugas yang nunggu dilanjutkan bagian lain.",
+      done:"Belum ada tugas yang ditandai selesai."
+    };
+    listEl.innerHTML = `<div class="empty"><b>Kosong</b>${msgs[statusTab]}</div>`;
+    return;
+  }
+
+  listEl.innerHTML = filtered.map(t=>`
+    <div class="card status-${t.status}" data-id="${t.id}">
+      <h3>${escapeHtml(t.title)}</h3>
+      ${t.desc ? `<p class="desc">${escapeHtml(t.desc)}</p>` : ""}
+      <div class="meta-row">
+        <span class="tag">Dari: ${t.dept}</span>
+        ${t.status==="handoff" ? `<span class="tag route">→ ${t.targetDept}</span>` : ""}
+      </div>
+      <div class="foot">
+        <div class="pic">PIC: <b>${escapeHtml(t.pic || "-")}</b></div>
+        <div class="actions">
+          ${t.status!=="done" ? `<button class="btn btn-advance" data-act="advance">${t.status==="progress" ? "Tandai kelar" : "Selesaikan"}</button>` : ""}
+          <button class="btn btn-edit" data-act="edit">Edit</button>
+          <button class="btn btn-del" data-act="del">Hapus</button>
+        </div>
+      </div>
+    </div>
+  `).join("");
+
+  listEl.querySelectorAll(".card").forEach(card=>{
+    const id = card.dataset.id;
+    card.querySelector('[data-act="edit"]').addEventListener("click", ()=> openEdit(id));
+    const adv = card.querySelector('[data-act="advance"]');
+    if(adv) adv.addEventListener("click", ()=> advanceStatus(id));
+    const del = card.querySelector('[data-act="del"]');
+    del.addEventListener("click", ()=>{
+      if(deleteArmed===id){
+        tasks = tasks.filter(t=>t.id!==id);
+        deleteArmed = null;
+        saveTasks();
+      } else {
+        deleteArmed = id;
+        del.textContent = "Yakin?";
+        del.classList.add("confirm");
+        setTimeout(()=>{ if(deleteArmed===id){ deleteArmed=null; render(); } }, 2500);
+      }
+    });
+  });
+}
+
+function advanceStatus(id){
+  const t = tasks.find(x=>x.id===id);
+  if(!t) return;
+  t.status = "done";
+  t.updatedAt = Date.now();
+  saveTasks();
+}
+
+function escapeHtml(s){
+  const d = document.createElement("div");
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function render(){
+  buildDeptPills();
+  buildStatusTabs();
+  renderList();
+}
+
+// ---- Storage (Firebase Realtime Database) ----
+const banner = document.getElementById("saveBanner");
+const bannerText = document.getElementById("saveBannerText");
+const toast = document.getElementById("toast");
+let evtSource = null;
+let saving = false;
+
+function showBanner(msg){
+  bannerText.textContent = msg;
+  banner.classList.add("show");
+}
+function hideBanner(){ banner.classList.remove("show"); }
+function flashToast(msg){
+  toast.textContent = msg;
+  toast.classList.add("show");
+  setTimeout(()=> toast.classList.remove("show"), 1400);
+}
+
+function tasksFromSnapshot(data){
+  return data ? Object.values(data) : [];
+}
+
+async function initialLoad(){
+  try{
+    const res = await fetch(DATA_URL);
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    tasks = tasksFromSnapshot(data);
+    hideBanner();
+  }catch(e){
+    showBanner("Gagal ambil data tim: " + (e && e.message ? e.message : "koneksi bermasalah"));
+    tasks = [];
+  }
+  render();
+  connectRealtime();
+}
+
+function connectRealtime(){
+  if(evtSource) return;
+  try{
+    evtSource = new EventSource(DATA_URL);
+  }catch(e){
+    return; // initial fetch already loaded data; live sync just won't auto-update
+  }
+  evtSource.addEventListener("put", (e)=>{
+    try{
+      const payload = JSON.parse(e.data);
+      if(payload.path === "/"){
+        if(!saving){
+          tasks = tasksFromSnapshot(payload.data);
+          render();
+        }
+        hideBanner();
+      }
+    }catch(err){ console.error("Parse realtime gagal:", err); }
+  });
+}
+
+async function saveTasks(){
+  render();
+  const obj = {};
+  tasks.forEach(t => obj[t.id] = t);
+  saving = true;
+  try{
+    const res = await fetch(DATA_URL, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(obj)
+    });
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    hideBanner();
+    flashToast("Tersimpan");
+  }catch(e){
+    showBanner("Gagal simpan: " + (e && e.message ? e.message : "coba lagi") + ". Perubahan belum tersinkron ke tim.");
+  }
+  saving = false;
+}
+
+document.getElementById("btnRetry").addEventListener("click", ()=> saveTasks());
+
+// ---- Form sheet ----
+const overlay = $("#overlay");
+const fTitle = $("#fTitle"), fDesc = $("#fDesc"), fDept = $("#fDept"), fPic = $("#fPic"), fTarget = $("#fTarget");
+
+fDept.innerHTML = DEPTS.map(d=>`<option value="${d}">${d}</option>`).join("");
+fTarget.innerHTML = DEPTS.map(d=>`<option value="${d}">${d}</option>`).join("");
+
+function setStatusChoice(s){
+  pendingStatus = s;
+  document.querySelectorAll("#statusChoice button").forEach(b=>{
+    b.classList.toggle("sel", b.dataset.s===s);
+  });
+  $("#targetWrap").style.display = s==="handoff" ? "block" : "none";
+}
+document.querySelectorAll("#statusChoice button").forEach(b=>{
+  b.addEventListener("click", ()=> setStatusChoice(b.dataset.s));
+});
+
+function openAdd(){
+  editingId = null;
+  $("#sheetTitle").textContent = "Tugas Baru";
+  fTitle.value = ""; fDesc.value = ""; fPic.value = "";
+  fDept.value = deptFilter!=="Semua" ? deptFilter : DEPTS[0];
+  fTarget.value = DEPTS[0];
+  setStatusChoice(statusTab==="done" ? "progress" : statusTab);
+  overlay.classList.add("open");
+  setTimeout(()=>fTitle.focus(), 50);
+}
+
+function openEdit(id){
+  const t = tasks.find(x=>x.id===id);
+  if(!t) return;
+  editingId = id;
+  $("#sheetTitle").textContent = "Edit Tugas";
+  fTitle.value = t.title; fDesc.value = t.desc||""; fPic.value = t.pic||"";
+  fDept.value = t.dept;
+  fTarget.value = t.targetDept || DEPTS[0];
+  setStatusChoice(t.status);
+  overlay.classList.add("open");
+}
+
+function closeSheet(){ overlay.classList.remove("open"); }
+
+$("#fabAdd").addEventListener("click", openAdd);
+$("#btnCancel").addEventListener("click", closeSheet);
+overlay.addEventListener("click", (e)=>{ if(e.target===overlay) closeSheet(); });
+
+$("#btnSave").addEventListener("click", ()=>{
+  const title = fTitle.value.trim();
+  if(!title){ fTitle.focus(); return; }
+  const now = Date.now();
+  const payload = {
+    title,
+    desc: fDesc.value.trim(),
+    dept: fDept.value,
+    pic: fPic.value.trim(),
+    status: pendingStatus,
+    targetDept: pendingStatus==="handoff" ? fTarget.value : null,
+    updatedAt: now
+  };
+  if(editingId){
+    const t = tasks.find(x=>x.id===editingId);
+    Object.assign(t, payload);
+  } else {
+    tasks.push({ id: 't'+now+Math.random().toString(36).slice(2,7), createdAt: now, ...payload });
+  }
+  closeSheet();
+  saveTasks();
+});
+
+initialLoad();
+</script>
+</body>
+</html>
